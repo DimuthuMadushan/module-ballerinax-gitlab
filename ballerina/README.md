@@ -57,7 +57,7 @@ import ballerinax/gitlab;
 
 ```toml
 token = "<Personal access token>"
-projectId = "<Project ID or URL-encoded path, e.g. mygroup%2Fmyproject>"
+projectId = "<Project ID or path, e.g. 12345 or mygroup/myproject>"
 ```
 
 2. Create a `gitlab:ConnectionConfig` with the token and initialize the connector with it. Pass the base URL as the second argument for a self-managed instance.

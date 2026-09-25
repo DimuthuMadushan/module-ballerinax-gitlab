@@ -1,6 +1,6 @@
 # Release notes from merged merge requests
 
-This example drafts the notes for a new release of a GitLab project. It finds the project's default branch and its most recent release, pages through the merge requests merged into the default branch since that release, and writes one line per merge request with its author and reviewers. With `publish = true` it then creates the tag and the release from the default branch in a single call.
+This example drafts the notes for a new release of a GitLab project. It finds the project's default branch and its most recent completed release (upcoming releases are skipped), pages through the merge requests merged into the default branch since that release, and writes one line per merge request with its author and reviewers. With `publish = true` it then creates the tag and the release from the default branch in a single call.
 
 By default the example is a dry run: it prints the notes and creates nothing.
 
@@ -17,7 +17,7 @@ Create a `Config.toml` file in the example's root directory with the following c
 ```toml
 token = "<Personal access token>"
 serviceUrl = "https://gitlab.com/api/v4"
-projectId = "<Project ID or URL-encoded path, e.g. mygroup%2Fmyproject>"
+projectId = "<Project ID or path, e.g. 12345 or mygroup/myproject>"
 tagName = "<Tag for the new release, e.g. v1.4.0>"
 publish = false
 ```

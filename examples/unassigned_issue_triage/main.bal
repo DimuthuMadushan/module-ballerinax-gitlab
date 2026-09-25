@@ -63,9 +63,19 @@ public function main() returns error? {
         return;
     }
 
-    // Step 3: make sure the triage label exists in the project.
-    gitlab:ProjectLabel[] existing = check gitlabClient->listProjectLabels(projectId, search = triageLabel);
-    boolean labelExists = existing.some(label => label.name == triageLabel);
+    // Step 3: make sure the triage label exists in the project. `search` is a fuzzy match, so
+    // check every page for the exact name.
+    boolean labelExists = false;
+    int labelPage = 1;
+    while !labelExists {
+        gitlab:ProjectLabel[] batch = check gitlabClient->listProjectLabels(projectId, search = triageLabel,
+            page = labelPage, perPage = PAGE_SIZE);
+        labelExists = batch.some(label => label.name == triageLabel);
+        if batch.length() < PAGE_SIZE {
+            break;
+        }
+        labelPage += 1;
+    }
     if !labelExists {
         gitlab:ProjectLabel created = check gitlabClient->createProjectLabel(projectId, {
             name: triageLabel,

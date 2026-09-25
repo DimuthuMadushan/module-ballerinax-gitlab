@@ -17,9 +17,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
-- **Every public method is renamed.** The 1.5.1 methods were named after their paths and HTTP verbs; 2.0.0 uses stable
-  names derived from what each operation does, and all 1,859 methods are remote methods. The twelve 1.5.1 methods map
-  as follows:
+- **Every public method except `getVersion()` is renamed.** The 1.5.1 methods were named after their paths and HTTP
+  verbs; 2.0.0 uses stable names derived from what each operation does, and all 1,859 methods are remote methods. The
+  twelve 1.5.1 methods map as follows:
 
   | 1.5.1 method | 2.0.0 method |
   |---|---|

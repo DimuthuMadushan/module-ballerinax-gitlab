@@ -339,6 +339,20 @@ These changes are done in order to improve the overall usability, and as workaro
 - **Updated**: Nothing. No request schema is invented.
 - **Reason**: The GitLab REST API documents these endpoints as taking `branch`, `content`, `commit_message` (and, for commits, `actions`), none of which the specification declares, so the generated methods cannot send the documented request. The other multipart operations (project, group, user, topic and package uploads) declare their fields and are unaffected. Recorded so a later specification release that documents these bodies can be picked up on regeneration.
 
+15. utils.bal serialization fixes (generated code patched after generation)
+- **Original**: The `ballerina/utils.bal` that `bal openapi` 2201.13.4 generates has four serialization defects:
+  1. `createFormURLEncodedRequestBody` calls `getFormStyleRequest(key, value)` for a record field without passing `encodingData.explode`, so a form field declared `explode: false` is still exploded.
+  2. `createBodyParts` builds the multipart part header as the string `filename=${value.fileName}` and parses it back with `mime:getContentDispositionObject`, so a `;` in the file name starts a new parameter (`a;b=c.txt` is sent as `filename="a";b=c.txt`). `"`, CR and LF are also sent unescaped, and CR/LF can inject extra header lines.
+  3. `createFormURLEncodedRequestBody`, `getDeepObjectStyleRequest`, both branches of `getFormStyleRequest` and `getSerializedRecordArray` call `pop()` on their output buffer unconditionally, which panics with `IndexOutOfRange` for an empty record or record array.
+  4. A record serialized in form style with `explode: false`, as a query parameter or form field, has no `name=` prefix: `{r: 1, g: 2}` for `color` is sent as `r,1,g,2`, not `color=r,1,g,2`.
+- **Updated**:
+  1. The form-body record branch passes `explode`. For `explode: false` it emits `key=` followed by the non-exploded record.
+  2. The file part's `ContentDisposition` object is parsed from the name-only header, and `fileName` is then set on the object, so the serializer quotes the value itself. A new helper, `getQuotedStringContent`, percent-encodes `"`, CR and LF as `%22`, `%0D` and `%0A`, as browsers do for multipart file names. `constructEntity` accepts `string|mime:ContentDisposition`.
+  3. Each of those `pop()` calls is guarded with a length check, so empty input serializes to `""`, or to `parent=` for a non-exploded empty record array.
+  4. `getPathForQueryParam` and the form-body branch prefix non-exploded records with `key=`. `getFormStyleRequest` itself is unchanged, because `getSerializedRecordArray` already writes the `parent=` prefix for record arrays.
+
+- **Reason**: The defects are in the `bal openapi` utils template, not in the specification, so no specification change can fix them.
+
 ## OpenAPI cli command
 
 The following command was used to generate the Ballerina client from the OpenAPI specification. The command should be executed from the repository root directory.

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-To run the tests against a live GitLab instance you need a personal access token with the `api` scope, a project you can write to, a group you belong to, and the numeric ID of a namespace in which you can create projects. Follow the [Setup guide](https://github.com/ballerina-platform/module-ballerinax-gitlab/blob/main/ballerina/README.md#setup-guide) to create the token.
+To run the tests against a live GitLab instance you need a personal access token with the `api` scope, a project on which you have the Owner role (deleting issues requires it), a group you belong to, and the numeric ID of a namespace in which you can both create and delete projects. For a group namespace, that means the Owner role on the group. Follow the [Setup guide](https://github.com/ballerina-platform/module-ballerinax-gitlab/blob/main/ballerina/README.md#setup-guide) to create the token.
 
 The live tests create and delete issues, labels, branches and a project. Run them against a sandbox project, never a production one. The project needs a `main` branch containing a `README.md` file.
 

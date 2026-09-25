@@ -37,11 +37,26 @@ public function main() returns error? {
         return error(string `project ${projectId} has no default branch`);
     }
 
-    // Step 2: the most recent release marks where the new notes start.
-    gitlab:Release[] releases = check gitlabClient->listProjectReleases(projectId, orderBy = "released_at",
-        sort = "desc", perPage = 1);
-    string? since = releases.length() > 0 ? releases[0].releasedAt : ();
-    io:println(since is string ? string `Changes since ${releases[0].tagName ?: ""} (${since})`
+    // Step 2: the most recent completed release marks where the new notes start. Upcoming releases
+    // (released_at in the future) sort first, so page past them.
+    gitlab:Release? lastRelease = ();
+    int releasePage = 1;
+    while lastRelease is () {
+        gitlab:Release[] releases = check gitlabClient->listProjectReleases(projectId, orderBy = "released_at",
+            sort = "desc", page = releasePage, perPage = PAGE_SIZE);
+        foreach gitlab:Release release in releases {
+            if release.upcomingRelease != true && release.releasedAt is string {
+                lastRelease = release;
+                break;
+            }
+        }
+        if releases.length() < PAGE_SIZE {
+            break;
+        }
+        releasePage += 1;
+    }
+    string? since = lastRelease?.releasedAt;
+    io:println(lastRelease is gitlab:Release ? string `Changes since ${lastRelease.tagName ?: ""} (${since ?: ""})`
             : "No earlier release: collecting every merged merge request");
 
     // Step 3: collect the merge requests merged into the default branch since then.

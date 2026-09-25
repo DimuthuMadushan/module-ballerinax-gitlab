@@ -57,15 +57,19 @@ isolated function createFormURLEncodedRequestBody(record {|anydata...;|} anyReco
         } else if (value is record {}) {
             if encodingData.style == DEEPOBJECT {
                 payload.push(getDeepObjectStyleRequest(key, value));
-            } else {
+            } else if encodingData.explode {
                 payload.push(getFormStyleRequest(key, value));
+            } else {
+                payload.push(key, "=", getFormStyleRequest(key, value, false));
             }
         } else if (value is record {}[]) {
             payload.push(getSerializedRecordArray(key, value, encodingData.style, encodingData.explode));
         }
         payload.push("&");
     }
-    _ = payload.pop();
+    if payload.length() > 0 {
+        _ = payload.pop();
+    }
     return string:'join("", ...payload);
 }
 
@@ -90,7 +94,9 @@ isolated function getDeepObjectStyleRequest(string parent, record {} anyRecord) 
         }
         recordArray.push("&");
     }
-    _ = recordArray.pop();
+    if recordArray.length() > 0 {
+        _ = recordArray.pop();
+    }
     return string:'join("", ...recordArray);
 }
 
@@ -113,7 +119,9 @@ isolated function getFormStyleRequest(string parent, record {} anyRecord, boolea
             }
             recordArray.push("&");
         }
-        _ = recordArray.pop();
+        if recordArray.length() > 0 {
+            _ = recordArray.pop();
+        }
     } else {
         foreach [string, anydata] [key, value] in anyRecord.entries() {
             if value is SimpleBasicType {
@@ -125,7 +133,9 @@ isolated function getFormStyleRequest(string parent, record {} anyRecord, boolea
             }
             recordArray.push(",");
         }
-        _ = recordArray.pop();
+        if recordArray.length() > 0 {
+            _ = recordArray.pop();
+        }
     }
     return string:'join("", ...recordArray);
 }
@@ -193,7 +203,9 @@ isolated function getSerializedRecordArray(string parent, record {}[] value, str
             serializedArray.push(getFormStyleRequest(parent, recordItem, explode), ",");
         }
     }
-    _ = serializedArray.pop();
+    if value.length() > 0 {
+        _ = serializedArray.pop();
+    }
     return string:'join("", ...serializedArray);
 }
 
@@ -233,8 +245,10 @@ isolated function getPathForQueryParam(map<anydata> queryParam, map<Encoding> en
             } else if value is record {} {
                 if encodingData.style == DEEPOBJECT {
                     param.push(getDeepObjectStyleRequest(key, value));
+                } else if encodingData.explode {
+                    param.push(getFormStyleRequest(key, value));
                 } else {
-                    param.push(getFormStyleRequest(key, value, encodingData.explode));
+                    param.push(key, "=", getFormStyleRequest(key, value, false));
                 }
             } else {
                 param.push(key, "=", value.toString());
@@ -254,7 +268,9 @@ returns mime:Entity[]|error {
         Encoding encodingData = encodingMap.hasKey(key) ? encodingMap.get(key) : {};
         string contentDisposition = string `form-data; name=${key};`;
         if value is record {byte[] fileContent; string fileName;} {
-            string fileContentDisposition = string `${contentDisposition} filename=${value.fileName}`;
+            // Set the file name on the parsed object: parsing a `filename="..."` string splits it at any `;`.
+            mime:ContentDisposition fileContentDisposition = mime:getContentDispositionObject(contentDisposition);
+            fileContentDisposition.fileName = getQuotedStringContent(value.fileName);
             mime:Entity entity = check constructEntity(fileContentDisposition, encodingData,
                     value.fileContent);
             entities.push(entity);
@@ -302,10 +318,11 @@ returns mime:Entity[]|error {
     return entities;
 }
 
-isolated function constructEntity(string contentDisposition, Encoding encoding,
+isolated function constructEntity(string|mime:ContentDisposition contentDisposition, Encoding encoding,
         string|byte[]|record {} data) returns mime:Entity|error {
     mime:Entity entity = new mime:Entity();
-    entity.setContentDisposition(mime:getContentDispositionObject(contentDisposition));
+    entity.setContentDisposition(contentDisposition is string ?
+        mime:getContentDispositionObject(contentDisposition) : contentDisposition);
     if data is byte[] {
         entity.setByteArray(data);
     } else if data is string {
@@ -329,4 +346,15 @@ isolated function populateEncodingInfo(mime:Entity entity, Encoding encoding) re
             }
         }
     }
+}
+
+# Escape a value for use inside a quoted Content-Disposition parameter, as browsers do for multipart form data.
+#
+# + value - Value to be escaped
+# + return - Escaped value, without the surrounding quotes
+isolated function getQuotedStringContent(string value) returns string {
+    string:RegExp quote = re `"`;
+    string:RegExp carriageReturn = re `\r`;
+    string:RegExp lineFeed = re `\n`;
+    return lineFeed.replaceAll(carriageReturn.replaceAll(quote.replaceAll(value, "%22"), "%0D"), "%0A");
 }

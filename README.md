@@ -10,15 +10,6 @@
 
 The GitLab connector lets Ballerina applications work with projects, groups and users; issues, epics, milestones and labels; merge requests, reviews and approvals; repositories, branches, tags, commits and releases; CI/CD pipelines, jobs, runners and variables; and the package, container and model registries. It supports version 4 of the GitLab REST API, as shipped with GitLab 19.5.
 
-### Key features
-
-- Manage projects, groups, members and access tokens
-- Track work with issues, epics, milestones, labels and boards
-- Review and merge code with merge requests, discussions and approvals
-- Work with repositories, branches, tags, commits and releases
-- Run and monitor CI/CD pipelines, jobs, runners and environments
-- Publish and consume packages across the GitLab package registries
-
 ## Setup guide
 
 To use the GitLab connector you need a GitLab account on [gitlab.com](https://gitlab.com/users/sign_up) or on a self-managed GitLab instance, and a token the connector sends with every request. The simplest is a personal access token.
@@ -63,7 +54,7 @@ import ballerinax/gitlab;
 
 ```toml
 token = "<Personal access token>"
-projectId = "<Project ID or URL-encoded path, e.g. mygroup%2Fmyproject>"
+projectId = "<Project ID or path, e.g. 12345 or mygroup/myproject>"
 ```
 
 2. Create a `gitlab:ConnectionConfig` with the token and initialize the connector with it. Pass the base URL as the second argument for a self-managed instance.

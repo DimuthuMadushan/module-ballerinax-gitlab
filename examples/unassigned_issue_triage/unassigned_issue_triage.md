@@ -17,7 +17,7 @@ Create a `Config.toml` file in the example's root directory with the following c
 ```toml
 token = "<Personal access token>"
 serviceUrl = "https://gitlab.com/api/v4"
-projectId = "<Project ID or URL-encoded path, e.g. mygroup%2Fmyproject>"
+projectId = "<Project ID or path, e.g. 12345 or mygroup/myproject>"
 triageLabel = "needs-triage"
 triageLabelColor = "#f0ad4e"
 applyLabels = false

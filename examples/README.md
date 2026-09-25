@@ -14,7 +14,7 @@ The `ballerinax/gitlab` connector provides practical examples illustrating usage
     ```toml
     token = "<Personal access token>"
     serviceUrl = "https://gitlab.com/api/v4"
-    projectId = "<Project ID or URL-encoded path>"
+    projectId = "<Project ID or path, e.g. 12345 or mygroup/myproject>"
     ```
 
 Both examples are dry runs by default and change nothing until their `applyLabels` or `publish` flag is set to `true`.
